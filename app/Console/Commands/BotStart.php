@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\ExchangeService;
 use ccxt\bitstamp;
 use Illuminate\Console\Command;
 
@@ -29,10 +30,8 @@ class BotStart extends Command
      */
     public function __construct()
     {
-        $this->exchange = new bitstamp(array(
-            'apiKey' => env("API_KEY"),
-            'secret' => env('API_SECRET'),
-        ));
+        //dd("x");
+        $this->exchange = new ExchangeService();
         parent::__construct();
     }
 
@@ -43,21 +42,34 @@ class BotStart extends Command
      */
     public function handle()
     {
-        //get needed info
-        $balance = $this->exchange->fetch_balance();
+
+/**
+        $balance = $this->exchange->getBalance();
+        $trades = $this->exchange->fetch_my_trades();
         $freeCoins = [];
+        $total = 0;
         foreach($balance['free'] as $symbol=>$value) {
             if($value != 0) {
-                $freeCoins[] = [$symbol, $value];
+                $price = 1;
+                if($symbol != "USD")  {
+                    $ticker = $this->exchange->fetch_ticker($symbol."/USD");
+                    $price = $ticker['ask'];
+                }
+                $value_in_usd = $value*$price;
+                $freeCoins[] = [$symbol, $value, $value_in_usd, $price];
+                $total+=round($value_in_usd,2);
             }
         }
-        $trades = $this->exchange->fetch_my_trades();
+
+        //$trades = $this->exchange->fetch_my_trades();
         //save trades to debug later
 
         $this->table(
-            ['Symbol','Value'],
+            ['Symbol','Value','In USD','Price per coin'],
             $freeCoins
         );
+        $this->line('Total: '.$total);
         return Command::SUCCESS;
+ * **/
     }
 }
