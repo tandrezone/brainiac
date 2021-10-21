@@ -42,34 +42,29 @@ class BotStart extends Command
      */
     public function handle()
     {
-
-/**
-        $balance = $this->exchange->getBalance();
-        $trades = $this->exchange->fetch_my_trades();
-        $freeCoins = [];
-        $total = 0;
-        foreach($balance['free'] as $symbol=>$value) {
-            if($value != 0) {
-                $price = 1;
-                if($symbol != "USD")  {
-                    $ticker = $this->exchange->fetch_ticker($symbol."/USD");
-                    $price = $ticker['ask'];
+        //simple messy thing to sell at 5% gain
+        $cryptos = $this->exchange->getCrypto();
+        while (true) {
+            $table = [];
+            foreach ($cryptos->toArray() as $crypto) {
+                $ticker = $this->exchange->getPrice($crypto['coin']);
+                $min = $crypto['min_value'] + ($crypto['min_value'] / 100) * 5;
+                $action = '';
+                $gain = round(($ticker['ask'] - $crypto['min_value']) / ($crypto['min_value'] / 100), 2) . "%";
+                if ($ticker['ask'] > $min) {
+                    $action = 'sell';
+                    print_r($this->exchange->sell($crypto['coin'], 'trade', 'sell', $crypto['value'], $ticker['ask']));
+                    dd('SOLD');
                 }
-                $value_in_usd = $value*$price;
-                $freeCoins[] = [$symbol, $value, $value_in_usd, $price];
-                $total+=round($value_in_usd,2);
+                $table[] = [$crypto['coin'], $crypto['min_value'], $ticker['ask'], $gain, $action];
+
             }
+            $this->table(
+                ['Coin', 'Buy Value', 'Ticker Value', 'Gain', 'Action'],
+                $table
+            );
+            sleep(1);
         }
 
-        //$trades = $this->exchange->fetch_my_trades();
-        //save trades to debug later
-
-        $this->table(
-            ['Symbol','Value','In USD','Price per coin'],
-            $freeCoins
-        );
-        $this->line('Total: '.$total);
-        return Command::SUCCESS;
- * **/
     }
 }

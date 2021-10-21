@@ -17,6 +17,7 @@ class CreateBalanceTable extends Migration
             $table->id();
             $table->string('coin')->unique();
             $table->string('value');
+            $table->string('min_value')->nullable();
             $table->timestamps();
         });
     }
